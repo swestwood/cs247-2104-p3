@@ -4,6 +4,23 @@
 # Compile by running coffee -wc main.coffee to generate main.js
 # For CS247, Spring 2014
 
+# Drawn from http://en.wikipedia.org/wiki/List_of_emoticons
+EMOTICON_MAP =
+  "angry": [">:(", ">_<"]  # Sort roughly so that the full emoticon is captured, ie ">:(" does not first match ":("
+  "crying": [":'-(", ":'("]
+  "surprise": [">:O", ":-O", ":O", ":-o", ":o", "8-0", "O_O", "o-o", "O_o", "o_O", "o_o", "O-O"]
+  "tongue": [">:P", ":-P", ":P", "X-P", "x-p", "xp", "XP", ":-p", ":p", "=p", ":-b", ":b", "d:"]
+  "laughing": [":-D", ":D", "8-D", "8D", "x-D", "xD", "X-D", "XD", "=-D", "=D", "=-3", "=3"]
+  "happy": [":-)", ":)", ":o)", ":]", ":3", ":c)", ":>", "=]", "8)", "=)", ":}"]
+  "sad": [">:[", ":-(", ":(", ":-c", ":c", ":-<", ":<", ":-[", ":[", ":{"]
+  "wink": [";-)", ";)", "*-)", "*)", ";-]", ";]", ";D", ";^)", ":-,"]
+  "uneasy": [">:\\", ">:/", ":-/", ":-.", ":/", ":\\", "=/", "=\\", ":L", "=L", ":S", ">.<"]
+  "expressionless": [":|", ":-|"]
+  "embarrassed": [":$"]
+  "secretive": [":-X", ":X"]
+  "heart": ["<3"]
+  "broken": ["</3"]
+
 class FirebaseInteractor
   """Connects to Firebase and connects to chatroom variables."""
   constructor: ->
@@ -52,20 +69,26 @@ class ChatRoom
     # bind submission box
     $("#submission input").on "keydown", (event) =>
       if (event.which == 13)
-        console.log(@submissionEl.val())
-        if (@hasEmotions(@submissionEl.val()))
-          @fbInteractor.fb_instance_stream.push({m: @username + ": " + @submissionEl.val(), v: @videoRecorder.curVideoBlob, c: @userColor})
+        message = @submissionEl.val()
+        console.log(message)
+        if @hasEmotions(message)
+          @fbInteractor.fb_instance_stream.push
+            m: @username + ": " + message
+            v: @videoRecorder.curVideoBlob
+            c: @userColor
         else
-          @fbInteractor.fb_instance_stream.push({m: @username + ": " + @submissionEl.val(), c: @userColor})
+          @fbInteractor.fb_instance_stream.push
+            m: @username + ": " + message
+            c: @userColor
         @submissionEl.val("")
 
 
   # check to see if a message qualifies to be replaced with video.
   hasEmotions: (msg) =>
-    emoticons = ["lol", ":)", ":("]
-    for emoticon in emoticons
-      if msg.indexOf(emoticon) != -1
-        return true
+    for emotion, faces of EMOTICON_MAP
+      for face in faces
+        if msg.indexOf(face) != -1
+          return true
     return false
 
   scrollToBottom: (wait_time) =>
