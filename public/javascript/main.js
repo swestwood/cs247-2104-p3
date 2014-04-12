@@ -426,7 +426,7 @@
     };
 
     ChatRoom.prototype.updateProgressBar = function() {
-      var animationLength, getPercent, getProgressWrapWidth, key, newPercent, numberPerUserArr, progressTotal, sumOfBiggestTwo, val, _ref;
+      var animationLength, getProgressWrapWidth, key, newPercent, numberPerUserArr, percentHundred, progressTotal, sumOfBiggestTwo, val, _ref;
       numberPerUserArr = [];
       _ref = this.emotionVideoStore.videos;
       for (key in _ref) {
@@ -446,10 +446,9 @@
       if (newPercent > 100) {
         newPercent = 100;
       }
-      $(".progress-wrap").data("progress-percent", newPercent);
-      getPercent = $(".progress-wrap").data("progress-percent") / 100;
+      percentHundred = newPercent / 100;
       getProgressWrapWidth = $(".progress-wrap").width();
-      progressTotal = getPercent * getProgressWrapWidth;
+      progressTotal = percentHundred * getProgressWrapWidth;
       animationLength = 1000;
       return $(".progress-bar").animate({
         left: progressTotal

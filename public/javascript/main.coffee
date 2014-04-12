@@ -312,10 +312,9 @@ class window.ChatRoom
     newPercent = (sumOfBiggestTwo / (MIN_REQUIRED_VIDEOS_FOR_QUIZ * 2)) * 100
     if newPercent > 100
       newPercent = 100
-    $(".progress-wrap").data("progress-percent", newPercent)
-    getPercent = ($(".progress-wrap").data("progress-percent") / 100)
+    percentHundred = newPercent/100
     getProgressWrapWidth = $(".progress-wrap").width()
-    progressTotal = getPercent * getProgressWrapWidth
+    progressTotal = percentHundred * getProgressWrapWidth
     animationLength = 1000 #lengthen to create animation
   
     # on page load, animate percentage bar to data percentage length
