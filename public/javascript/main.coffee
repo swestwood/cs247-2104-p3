@@ -50,6 +50,17 @@ class window.FirebaseInteractor
     @fb_user_quiz_one = @fb_new_chat_room.child('user_quiz_one')  # TODO check if these exist separately
     @fb_user_quiz_two = @fb_new_chat_room.child('user_quiz_two')
 
+class window.Powerup
+  """Builds and renders a single powerup screen."""
+
+  constructor: (@elem) ->
+    @render()
+
+  render: =>
+    context = []
+    html = window.Templates["powerup"](context)
+    @elem.html(html)
+
 class window.Quiz
   """Builds and renders a single quiz."""
 
@@ -65,7 +76,6 @@ class window.Quiz
       quizChoices: @choices
     html = window.Templates["quiz"](context)
     @elem.html(html)
-
 
 class window.QuizCoordinator
   """Manipulates Quiz objects for the game."""
@@ -95,9 +105,20 @@ class window.QuizCoordinator
       quizEl.css({"background-color": "#FFCCCC"})
     quizEl.addClass("inactive").removeClass("active")
     @getQuizInteractor(quizName).update({"status": "quiz over"})
+    # setTimeout (=> @switchScreen false), 1000   # TODO add back in?
 
   setUserName: (user) =>
     @username = user
+
+  switchScreen: (showQuiz) =>
+    if showQuiz
+      console.log("hello")
+      $('#quiz_container').show()
+      $('#powerup_container').hide()
+    else 
+      $('#quiz_container').hide()
+      @currentPowerup = new Powerup($('#powerup_container'))
+      $('#powerup_container').show() 
 
   handleIncomingQuiz: (snapshot, quizName) =>
     console.log "handling incoming quiz"
@@ -106,6 +127,7 @@ class window.QuizCoordinator
     quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, quizEl, snapshot.status)
     quiz.render()
     quizEl.addClass("active").removeClass("inactive")
+    # @switchScreen(true)  # TODO add in?
     if snapshot.fromUser == @username
       quizEl.removeClass("enabled")
       quizEl.css({"background-color": "lightgray"})
@@ -118,6 +140,7 @@ class window.QuizCoordinator
         console.log 'removing'
         console.log quizChoiceSelector
         @respondToAnswerChoice(evt, quizChoiceSelector, quizName)
+
 
 
   getLongVideoArrays: =>
@@ -179,6 +202,7 @@ class window.ChatRoom
   constructor: (@fbInteractor, @videoRecorder) ->
     @emotionVideoStore = new EmotionVideoStore()
     @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor)
+    @currentPowerup = new Powerup($('#powerup_container'))
 
     # Listen to Firebase events
     @fbInteractor.fb_instance_users.on "child_added", (snapshot) =>

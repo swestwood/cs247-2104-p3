@@ -16,8 +16,15 @@ window.buildTemplates = =>
   </div>
   """
 
+  powerupHandlebars = """
+  <div class="quiz_title">Use emoticons to increase your level!</div>
+  <p>Once your power bar fills up, it's game time!</p>
+  """
+
   # Add any new templates to this dictionary so that they get compiled.
-  handlebarsElems = {"quiz": quizHandlebars}
+  handlebarsElems = 
+    "quiz": quizHandlebars
+    "powerup": powerupHandlebars
   return handlebarsElems
 
 # Access templates via window.Templates["quiz"] for example, depending on the name given in
