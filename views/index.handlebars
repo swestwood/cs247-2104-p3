@@ -1,12 +1,16 @@
-  <div>Welcome to {{title}}, enable camera to post video emoji!</div>
+  <!--<div>Welcome to {{title}}, enable camera to post video emoji!</div>-->
   <div id="waiting">Connecting to chat server...</div>
   <div id="second_counter"></div>
-  <div id="conversation"></div>
+  <div id="titlebar">
+    <div id="webcam_stream"></div>
+    <h1>Chatroom</h1>
+  </div>
+  <div id="conversation" style="clear:both;"></div>
   {{!-- <div id="separator"></div> --}}
   <div id="quiz_box">
       <div id="quiz_container" class="container" style="display:hidden">
-        <div class="quiz quiz_one">&nbsp;</div>
-        <div class="quiz quiz_two">&nbsp;</div>
+        <div class="quiz quiz_one" style="clear:both;">&nbsp;</div>
+        <div class="quiz quiz_two" style="clear:both;">&nbsp;</div>
       </div>
       <div id="powerup_container" class="container" style="display:hidden;"></div>
       <div id="quiz-done-area">
@@ -15,7 +19,6 @@
   <div id="submission">
     <input type="text" placeholder="say something..">
   </div>
-  <div id="webcam_stream"></div>
   <div id="video_container">
   </div>
   

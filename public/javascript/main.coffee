@@ -62,6 +62,23 @@ class window.Powerup
     html = window.Templates["powerup"](context)
     @elem.html(html)
 
+  moveProgressBar: =>
+    console.log "hello"
+    curPercent = $(".progress-wrap").data("progress-percent") 
+    newPercent = curPercent + ((1/(MIN_REQUIRED_VIDEOS_FOR_QUIZ * 2)) * 100)
+    if newPercent > 100
+      newPercent = 100
+    $(".progress-wrap").data("progress-percent", newPercent)
+    getPercent = ($(".progress-wrap").data("progress-percent") / 100)
+    getProgressWrapWidth = $(".progress-wrap").width()
+    progressTotal = getPercent * getProgressWrapWidth
+    animationLength = 2500 #lengthen to create animation
+  
+    # on page load, animate percentage bar to data percentage length
+    $(".progress-bar").animate
+      left: progressTotal
+    , animationLength
+
 class window.Quiz
   """Builds and renders a single quiz."""
 
@@ -87,7 +104,7 @@ class window.Quiz
 class window.QuizCoordinator
   """Manipulates Quiz objects for the game."""
 
-  constructor: (@elem, @emotionVideoStore, @fbInteractor, @updatePowerupScreenFcn) ->
+  constructor: (@elem, @emotionVideoStore, @fbInteractor, @currentPowerup, @updatePowerupScreenFcn) ->
     @quizProbability = 1
     # @currentQuiz = null  # Non-null if a quiz is currently being taken by the user
     @username = null  # Should be set by the chatroom as soon as a username is given.
@@ -251,9 +268,9 @@ class window.ChatRoom
   """Main class to control the chat room UI of messages and video"""
   constructor: (@fbInteractor, @videoRecorder) ->
     @emotionVideoStore = new EmotionVideoStore()
-    @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor, @updatePowerupScreen)
     @currentPowerup = new Powerup($('#powerup_container'))
     @currentPowerup.render()
+    @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor, @currentPowerup, @updatePowerupScreen)
     @updatePowerupScreen()
 
     # Listen to Firebase events
@@ -268,6 +285,7 @@ class window.ChatRoom
     @fbInteractor.fb_user_video_list.on "child_added", (snapshot) =>
       @emotionVideoStore.addVideoSnapshot(snapshot.val())
       @updatePowerupScreen()
+      @currentPowerup.moveProgressBar()
       if @quizCoordinator.readyForQuiz()  # TODO move this so that it fires randomly.
         console.log "Ready for quiz!"
         @quizCoordinator.createQuiz()
@@ -372,7 +390,9 @@ class window.ChatRoom
 
   # creates a message node and appends it to the conversation
   displayMessage: (data) =>
-    $("#conversation").append("<div class='msg' style='color:"+data.c+"'>"+data.m+"</div>")
+    newMessage = $("<div class='msg' style='color:"+data.c+"'>"+data.m+"</div>")
+    newMessage.css("background-color", "#87cefa")
+    $("#conversation").append(newMessage)
     if data.v
       [source, video] = @createVideoElem(data.v)
       video.appendChild(source)

@@ -9,12 +9,10 @@ window.buildTemplates = =>
   <div class="indiv_quiz_container {{forWhomClass}}">
     <div class="quiz_title">Face off!</div>
     <p>{{challengeMessage}}</p>
-    <video autoplay="" loop="" width="100"><source src="{{videoUrl}}" type="video/webm"></video>
-    <div id="quiz-buttons" class="quiz-choices">
-      {{#each quizChoices}}
-        <button class='quiz-choice {{correct}}'>{{emoticon}}</button>
-      {{/each}}
-    </div>
+    <video autoplay="" loop="" width="320"><source src="{{videoUrl}}" type="video/webm"></video>
+    {{#each quizChoices}}
+      <button class='quiz-choice {{correct}}'>{{emoticon}}</button>
+    {{/each}}
   </div>
   """
 
@@ -25,7 +23,13 @@ window.buildTemplates = =>
   <div class="powerup_available_videos">
 
   </div>
+
+  <div class="progress-wrap progress" data-progress-percent="0">
+    <div class="progress-bar progress"></div>
+  </div>
+  <p id="powerup_encouragement"></p>
   """
+
 
   powerupAvailableHandlebars = """
   {{#each usersAvailable}}
