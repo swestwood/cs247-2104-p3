@@ -62,23 +62,6 @@ class window.Powerup
     html = window.Templates["powerup"](context)
     @elem.html(html)
 
-  moveProgressBar: =>
-    console.log "hello"
-    curPercent = $(".progress-wrap").data("progress-percent") 
-    newPercent = curPercent + ((1/(MIN_REQUIRED_VIDEOS_FOR_QUIZ * 2)) * 100)
-    if newPercent > 100
-      newPercent = 100
-    $(".progress-wrap").data("progress-percent", newPercent)
-    getPercent = ($(".progress-wrap").data("progress-percent") / 100)
-    getProgressWrapWidth = $(".progress-wrap").width()
-    progressTotal = getPercent * getProgressWrapWidth
-    animationLength = 2500 #lengthen to create animation
-  
-    # on page load, animate percentage bar to data percentage length
-    $(".progress-bar").animate
-      left: progressTotal
-    , animationLength
-
 class window.Quiz
   """Builds and renders a single quiz."""
 
@@ -177,8 +160,6 @@ class window.QuizCoordinator
         console.log 'removing'
         console.log quizChoiceSelector
         @respondToAnswerChoice(evt, quizChoiceSelector, quizName)
-
-
 
   getLongVideoArrays: =>
     longVideoArrs = {}
@@ -285,7 +266,6 @@ class window.ChatRoom
     @fbInteractor.fb_user_video_list.on "child_added", (snapshot) =>
       @emotionVideoStore.addVideoSnapshot(snapshot.val())
       @updatePowerupScreen()
-      @currentPowerup.moveProgressBar()
       if @quizCoordinator.readyForQuiz()  # TODO move this so that it fires randomly.
         console.log "Ready for quiz!"
         @quizCoordinator.createQuiz()
@@ -312,6 +292,35 @@ class window.ChatRoom
       context.usersAvailable.push(userContext)
     html = window.Templates["powerup_available"](context)
     $(".powerup_available_videos").html(html)
+    @updateProgressBar()
+
+  updateProgressBar: =>
+    # Hacky way to get the sum of the first and second biggest lengths of arrays for the top 2 users, where
+    # each user can only contribute 2. Basically, of the 4 required videos, 2 from each user, how close are we.
+    numberPerUserArr = []
+    for key, val of @emotionVideoStore.videos
+      numberPerUserArr.push(_.size(val))  # number available for this user.
+    numberPerUserArr.sort()
+    numberPerUserArr.reverse()
+    sumOfBiggestTwo = 0
+    if _.size(numberPerUserArr) >= 1
+      sumOfBiggestTwo += Math.min(numberPerUserArr[0], 2)
+    if _.size(numberPerUserArr) >= 2
+      sumOfBiggestTwo += Math.min(numberPerUserArr[1], 2)
+
+    newPercent = (sumOfBiggestTwo / (MIN_REQUIRED_VIDEOS_FOR_QUIZ * 2)) * 100
+    if newPercent > 100
+      newPercent = 100
+    $(".progress-wrap").data("progress-percent", newPercent)
+    getPercent = ($(".progress-wrap").data("progress-percent") / 100)
+    getProgressWrapWidth = $(".progress-wrap").width()
+    progressTotal = getPercent * getProgressWrapWidth
+    animationLength = 1000 #lengthen to create animation
+  
+    # on page load, animate percentage bar to data percentage length
+    $(".progress-bar").animate
+      left: progressTotal
+    , animationLength
 
 
   respondToFbQuiz: (snapshot, quizName) =>
