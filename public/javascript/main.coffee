@@ -26,7 +26,7 @@ window.VIDEO_LENGTH_MS = 1000  # The length of time that the snippets are record
 
 window.NUMBER_WRONG_CHOICES = 3  # The number of wrong choices shown for a quiz
 
-window.MIN_REQUIRED_VIDEOS_FOR_QUIZ = 1
+window.MIN_REQUIRED_VIDEOS_FOR_QUIZ = 2
 
 class window.FirebaseInteractor
   """Connects to Firebase and connects to chatroom variables."""
@@ -57,30 +57,37 @@ class window.Powerup
     # Do nothing
 
   render: =>
-    context = []
+    context =
+      numRequiredVideos: MIN_REQUIRED_VIDEOS_FOR_QUIZ
     html = window.Templates["powerup"](context)
     @elem.html(html)
 
 class window.Quiz
   """Builds and renders a single quiz."""
 
-  constructor: (@emoticonAnswer, @choices, @videoData, @fromUser, @toUser, @elem, @status) ->
+  constructor: (@emoticonAnswer, @choices, @videoData, @fromUser, @toUser, @elem, @status, @currUser) ->
     @videoBlob = URL.createObjectURL(BlobConverter.base64_to_blob(videoData))
 
   render: =>
+    videoOfCurrUser = @fromUser == @currUser
+    message = "How well do you know " + @fromUser + "?"
+    if videoOfCurrUser
+      message = "How well do they know you?"
     context =
       videoUrl: @videoBlob
       fromUser: @fromUser
       # userColor: @userColor
       emoticon: @emoticonAnswer
       quizChoices: @choices
+      challengeMessage: message
+      forWhomClass: if videoOfCurrUser then "otherPersonGuessing" else "selfIsGuessing"
     html = window.Templates["quiz"](context)
     @elem.html(html)
 
 class window.QuizCoordinator
   """Manipulates Quiz objects for the game."""
 
-  constructor: (@elem, @emotionVideoStore, @fbInteractor) ->
+  constructor: (@elem, @emotionVideoStore, @fbInteractor, @updatePowerupScreenFcn) ->
     @quizProbability = 1
     # @currentQuiz = null  # Non-null if a quiz is currently being taken by the user
     @username = null  # Should be set by the chatroom as soon as a username is given.
@@ -107,9 +114,16 @@ class window.QuizCoordinator
       quizEl.css({"background-color": "#FFCCCC"})
     quizEl.addClass("inactive").removeClass("active")
     @getQuizInteractor(quizName).update({"status": "quiz over"})
-    if $(".quiz.inactive").size() == 2  # TODO hacky -- basically if both quizzes are now inactive
+    if $(".quiz.inactive").size() == 2  # TODO hacky -- basically if both quizzes are now inactive, they can end the quiz
       console.log "switching screens back to powerup"
-      setTimeout (=> @switchScreen(false)), 2000   # Show the powerup screen now.
+      seconds = 7
+      console.log "showing it"
+      $("#quiz-done-area").show().html("Finished the quiz! Moving on in " + seconds + " seconds...")
+      setTimeout =>
+        @switchScreen(false)
+        $("#quiz-done-area").html("").hide()
+      , seconds*1000   # Show the powerup screen now.
+      
 
   setUserName: (user) =>
     @username = user
@@ -122,6 +136,7 @@ class window.QuizCoordinator
       $('#quiz_container').hide()
       @currentPowerup = new Powerup($('#powerup_container'))
       @currentPowerup.render()
+      @updatePowerupScreenFcn()
       $('#powerup_container').show()
 
   handleIncomingQuiz: (snapshot, quizName) =>
@@ -129,7 +144,7 @@ class window.QuizCoordinator
     console.log "handling incoming quiz"
     quizEl = $(@elem.find("." + quizName))
     quizEl.css({"background-color": "lightgray"})
-    quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, quizEl, snapshot.status)
+    quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, quizEl, snapshot.status, @username)
     quiz.render()
     quizEl.addClass("active").removeClass("inactive")
     @switchScreen(true)
@@ -180,10 +195,9 @@ class window.QuizCoordinator
     console.log 'responsible, making quiz'
     # This user is actually responsible for making the quiz
     # Choose a random video
-    randomVideoOne = _.sample(enoughUserVideos[usernames[0]])  # TODO choose 2 videos
-    # TODO remove the video from the firebase list of videos, and remove it from both clients too! listen to child_removed
+    randomVideoOne = _.sample(enoughUserVideos[usernames[0]])
     @fbInteractor.fb_user_quiz_one.set(randomVideoOne)
-    randomVideoTwo = _.sample(enoughUserVideos[usernames[1]])  # TODO choose 2 videos
+    randomVideoTwo = _.sample(enoughUserVideos[usernames[1]])
     @fbInteractor.fb_user_quiz_two.set(randomVideoTwo)
 
 
@@ -201,6 +215,11 @@ class window.EmotionVideoStore
     @videos[data.fromUser].push(data)
     console.log "videos: "
     console.log @videos
+
+  addUser: (username) =>
+    if username of @videos
+      return
+    @videos[username] = []
 
   storePushedFb: (pushedFb, quickId) =>
     @fbResults[quickId] = pushedFb  # Store a mapping
@@ -232,19 +251,23 @@ class window.ChatRoom
   """Main class to control the chat room UI of messages and video"""
   constructor: (@fbInteractor, @videoRecorder) ->
     @emotionVideoStore = new EmotionVideoStore()
-    @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor)
+    @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor, @updatePowerupScreen)
     @currentPowerup = new Powerup($('#powerup_container'))
     @currentPowerup.render()
+    @updatePowerupScreen()
 
     # Listen to Firebase events
     @fbInteractor.fb_instance_users.on "child_added", (snapshot) =>
       @displayMessage({m: snapshot.val().name + " joined the room", c: snapshot.val().c})
+      @emotionVideoStore.addUser(snapshot.val().name)
+      @updatePowerupScreen()
 
     @fbInteractor.fb_instance_stream.on "child_added", (snapshot) =>
       @displayMessage(snapshot.val())
 
-    @fbInteractor.fb_user_video_list.on "child_added", (snapshot) =>  # TODO listen to removed as well to update list
+    @fbInteractor.fb_user_video_list.on "child_added", (snapshot) =>
       @emotionVideoStore.addVideoSnapshot(snapshot.val())
+      @updatePowerupScreen()
       if @quizCoordinator.readyForQuiz()  # TODO move this so that it fires randomly.
         console.log "Ready for quiz!"
         @quizCoordinator.createQuiz()
@@ -260,6 +283,18 @@ class window.ChatRoom
       @respondToFbQuiz(snapshot, "quiz_two")
 
     @submissionEl = $("#submission input")
+
+  updatePowerupScreen: =>
+    context =
+      usersAvailable: []
+    for key, val of @emotionVideoStore.videos
+      userContext = {"username": key, "numAvailable": _.size(val)}
+      if _.size(val) >= MIN_REQUIRED_VIDEOS_FOR_QUIZ
+        userContext["enoughVideos"] = true
+      context.usersAvailable.push(userContext)
+    html = window.Templates["powerup_available"](context)
+    $(".powerup_available_videos").html(html)
+
 
   respondToFbQuiz: (snapshot, quizName) =>
     if not snapshot or not snapshot.val()

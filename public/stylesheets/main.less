@@ -20,8 +20,16 @@ a {
 #powerup_container {
   background-color: #6495ED;
 }
+#quiz-done-area {
+  background-color: lightyellow;
+}
 
 #quiz_container {
+  .otherPersonGuessing .quiz-choice {
+    cursor: default !important; // If the quiz is not ours to take, then we should not show a hand
+    background-color: #BBB;
+    border: 1px solid #777;
+  }
   .quiz-choice {
     // float:left;
     background-color:#72b4cc;
