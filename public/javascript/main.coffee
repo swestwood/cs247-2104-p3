@@ -33,16 +33,9 @@ class window.FirebaseInteractor
   constructor: ->
     @fb_instance = new Firebase("https://proto1-cs247-p3-fb.firebaseio.com")
 
-  # generate new chatroom id or use existing id
-  get_fb_chat_room_id: =>
-      url_segments = document.location.href.split("/#")
-      if url_segments[1]
-        return url_segments[1]
-      return Math.random().toString(36).substring(7)
-
   init: =>
     # set up variables to access firebase data structure
-    @fb_chat_room_id = @get_fb_chat_room_id()
+    @fb_chat_room_id = window.get_fb_chat_room_id()
     @fb_new_chat_room = @fb_instance.child('chatrooms').child(@fb_chat_room_id)
     @fb_instance_users = @fb_new_chat_room.child('users')
     @fb_instance_stream = @fb_new_chat_room.child('stream')

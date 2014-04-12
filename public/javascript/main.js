@@ -29,21 +29,11 @@
     "Connects to Firebase and connects to chatroom variables.";
     function FirebaseInteractor() {
       this.init = __bind(this.init, this);
-      this.get_fb_chat_room_id = __bind(this.get_fb_chat_room_id, this);
       this.fb_instance = new Firebase("https://proto1-cs247-p3-fb.firebaseio.com");
     }
 
-    FirebaseInteractor.prototype.get_fb_chat_room_id = function() {
-      var url_segments;
-      url_segments = document.location.href.split("/#");
-      if (url_segments[1]) {
-        return url_segments[1];
-      }
-      return Math.random().toString(36).substring(7);
-    };
-
     FirebaseInteractor.prototype.init = function() {
-      this.fb_chat_room_id = this.get_fb_chat_room_id();
+      this.fb_chat_room_id = window.get_fb_chat_room_id();
       this.fb_new_chat_room = this.fb_instance.child('chatrooms').child(this.fb_chat_room_id);
       this.fb_instance_users = this.fb_new_chat_room.child('users');
       this.fb_instance_stream = this.fb_new_chat_room.child('stream');
