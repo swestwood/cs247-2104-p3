@@ -7,13 +7,33 @@ a {
   color: #00B7FF;
 }
 
-#webcam_stream{
+#webcam_stream {
   position: absolute;
   top: 10px;
   right: 10px;
   padding: 0;
   video{
     border: 2px solid #dcc;
+  }
+}
+
+#quiz_container {
+  background-color: #FF99FF;
+  .quiz-choice {
+    display: inline-block;
+    padding: 40px 80px;
+    background-color: #F0F0FF;
+    cursor: pointer;
+  }
+  &.active .quiz-choice:hover {  // Only show the hover for an active quiz
+    background-color: #FFFFF0;
+  }
+  &.inactive .quiz-choice {
+    background-color: #DDD; /* Gray out when inactive*/
+    cursor: default;
+    &.correct {
+      background-color: lightgreen;  // Show the correct answer
+    }
   }
 }
 

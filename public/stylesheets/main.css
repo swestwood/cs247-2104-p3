@@ -14,6 +14,26 @@ a {
 #webcam_stream video {
   border: 2px solid #dcc;
 }
+#quiz_container {
+  background-color: #FF99FF;
+}
+#quiz_container .quiz-choice {
+  display: inline-block;
+  padding: 40px 80px;
+  background-color: #F0F0FF;
+  cursor: pointer;
+}
+#quiz_container.active .quiz-choice:hover {
+  background-color: #FFFFF0;
+}
+#quiz_container.inactive .quiz-choice {
+  background-color: #DDD;
+  /* Gray out when inactive*/
+  cursor: default;
+}
+#quiz_container.inactive .quiz-choice.correct {
+  background-color: lightgreen;
+}
 #second_counter {
   position: fixed;
   top: 20px;
