@@ -6,6 +6,16 @@ Compile by running coffee -wc *.coffee to generate main.js and compile other .co
 """
 
 class window.EmotionProcessor
+  @makeQuizChoices: (actualEmoticon) =>
+    """Creates a list of emoticon quiz choices, where the other emoticon choices do not express the
+    same emotion as the actual emoticon, or the same emotion as each other."""
+    @wrongChoices = EmotionProcessor.chooseEmotionsExcept(actualEmoticon, NUMBER_WRONG_CHOICES)
+    allChoices = _.clone(@wrongChoices)
+    allChoices.push(actualEmoticon)
+    allChoices = _.shuffle(allChoices)
+    choiceContext = ({"emoticon": choice, "correct": if choice == actualEmoticon then "correct" else "wrong"} for choice in allChoices)
+    return choiceContext
+
   # check to see if a message qualifies to be replaced with video.
   @getEmoticon: (msg) =>
     emoticons = []

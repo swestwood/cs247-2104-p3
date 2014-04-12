@@ -18,15 +18,19 @@ a {
 }
 
 #quiz_container {
-  background-color: #FF99FF;
   .quiz-choice {
     display: inline-block;
     padding: 40px 80px;
     background-color: #F0F0FF;
-    cursor: pointer;
   }
-  &.active .quiz-choice:hover {  // Only show the hover for an active quiz
-    background-color: #FFFFF0;
+  &.enabled {
+    .quiz-choice {
+      cursor: pointer;
+    }
+    background-color: #FF99FF;
+    &.active .quiz-choice:hover {  // Only show the hover for an active quiz
+      background-color: #FFFFF0;
+    }
   }
   &.inactive .quiz-choice {
     background-color: #DDD; /* Gray out when inactive*/
