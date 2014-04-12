@@ -26,6 +26,8 @@ window.VIDEO_LENGTH_MS = 1000  # The length of time that the snippets are record
 
 window.NUMBER_WRONG_CHOICES = 3  # The number of wrong choices shown for a quiz
 
+window.MIN_REQUIRED_VIDEOS_FOR_QUIZ = 1
+
 class window.FirebaseInteractor
   """Connects to Firebase and connects to chatroom variables."""
   constructor: ->
@@ -44,7 +46,8 @@ class window.FirebaseInteractor
     @fb_new_chat_room = @fb_instance.child('chatrooms').child(@fb_chat_room_id)
     @fb_instance_users = @fb_new_chat_room.child('users')
     @fb_instance_stream = @fb_new_chat_room.child('stream')
-    @fb_quiz_stream = @fb_new_chat_room.child('quiz')
+    @fb_user_video_list = @fb_new_chat_room.child('user_video_list')
+    @fb_user_quiz_one = @fb_new_chat_room.child('user_quiz_one')
 
 class window.PowerupCoordinator
   """Manipulates Powerup objects for the game."""
@@ -69,9 +72,8 @@ class window.Powerup
 class window.Quiz
   """Builds and renders a single quiz."""
 
-  constructor: (@emoticonAnswer, @videoData, @fromUser, @toUser, @elem) ->
+  constructor: (@emoticonAnswer, @choices, @videoData, @fromUser, @toUser, @elem, @status) ->
     @videoBlob = URL.createObjectURL(BlobConverter.base64_to_blob(videoData))
-    @wrongAnswers = []
 
   render: =>
     context =
@@ -79,45 +81,36 @@ class window.Quiz
       fromUser: @fromUser
       # userColor: @userColor
       emoticon: @emoticonAnswer
-      quizChoices: @makeQuizChoices(@emoticonAnswer)
+      quizChoices: @choices
     html = window.Templates["quiz"](context)
     @elem.html(html)
-
-  makeQuizChoices: (actualEmoticon) =>
-    """Creates a list of emoticon quiz choices, where the other emoticon choices do not express the
-    same emotion as the actual emoticon, or the same emotion as each other."""
-    @wrongChoices = EmotionProcessor.chooseEmotionsExcept(actualEmoticon, NUMBER_WRONG_CHOICES)
-    allChoices = _.clone(@wrongChoices)
-    allChoices.push(actualEmoticon)
-    allChoices = _.shuffle(allChoices)
-    choiceContext = ({"emoticon": choice, "correct": if choice == actualEmoticon then "correct" else "wrong"} for choice in allChoices)
-    return choiceContext
 
 class window.QuizCoordinator
   """Manipulates Quiz objects for the game."""
 
-  constructor: (@elem) ->
+  constructor: (@elem, @emotionVideoStore, @fbInteractor) ->
     @quizProbability = 1
-    @currentQuiz = null  # Non-null if a quiz is currently being taken by the user
+    # @currentQuiz = null  # Non-null if a quiz is currently being taken by the user
     @username = null  # Should be set by the chatroom as soon as a username is given.
 
   respondToAnswerChoice: (evt) =>
-    return if @currentQuiz == null
+    $("#quiz_container .quiz-choice").off("click", @respondToAnswerChoice)  # Only listen once.
+    # return if @currentQuiz == null
     isCorrect = $(evt.target).hasClass("correct")
-    if isCorrect
+    console.log $(evt.target).html()
+    @fbInteractor.fb_user_quiz_one.update({"status": "new guess", "guess": $(evt.target).html(), "guessCorrect": isCorrect})
+
+  handleGuessMade: (snapshot) =>
+    if snapshot.guessCorrect
       $("#quiz_container").css({"background-color": "green"})
     else
       $("#quiz_container").css({"background-color": "#FFCCCC"})
-    @currentQuiz = null  # A choice was made, so we are ready for another quiz. TODO set a time so it isn't given too soon..
     @elem.addClass("inactive").removeClass("active")
     setTimeout (=> @switchScreen false), 1000 
+    @fbInteractor.fb_user_quiz_one.update({"status": "quiz over"})
 
   setUserName: (user) =>
     @username = user
-
-  giveQuiz: (msg) =>
-    # TODO modify based on probability. Don't do the face game with multiple emoticons
-    return EmotionProcessor.countEmoticons(msg) == 1
 
   switchScreen: (showQuiz) =>
     if showQuiz
@@ -130,23 +123,75 @@ class window.QuizCoordinator
 
   handleIncomingQuiz: (snapshot) =>
     console.log "handling incoming quiz"
-    if @currentQuiz != null # or snapshot.username == @username  # TODO put back in so user doesn't see own quiz
-      return  # Ignore the quiz if there is already a quiz taken by this user, or if the quiz came from this user.
-    console.log("new quiz!")
     $("#quiz_container").css({"background-color": "lightgray"})
-    console.log snapshot
-    @currentQuiz = new Quiz(snapshot.emoticon, snapshot.v, snapshot.fromUser, @username, @elem)
-    @elem.addClass("active").removeClass("inactive")
-    @currentQuiz.render()
     @switchScreen(true)
-    #$("#quiz_container").show();
-    $(".quiz-choice").one("click", @respondToAnswerChoice)  # Only listens for one click, then no more.
+    quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, @elem, snapshot.status)
+    quiz.render()
+    $("#quiz_container").addClass("active").removeClass("inactive")
+    if snapshot.fromUser == @username
+      $("#quiz_container").removeClass("enabled")
+      $("#quiz_container").css({"background-color": "lightgray"})
+    else
+      $("#quiz_container").addClass("enabled")
+      $("#quiz_container").css({"background-color": "lightblue"})
+      $("#quiz_container .quiz-choice").on("click", @respondToAnswerChoice)  # Only listens for one click, then no more.
 
+  getLongVideoArrays: =>
+    longVideoArrs = {}
+    for key, val of @emotionVideoStore.videos
+      console.log "this hsould be a user name also " + key
+      if _.size(val) >= MIN_REQUIRED_VIDEOS_FOR_QUIZ
+        longVideoArrs[key] = val
+    return longVideoArrs
+
+  readyForQuiz: =>
+    # Find the two longest user arrays in the video store. Check if they are longer than the min required.
+    # If both are, then return true.
+    enoughUserVideos = @getLongVideoArrays()
+    return _.size(enoughUserVideos) >= 2
+
+  responsibleForMakingQuiz: (enoughUserVideos) =>
+    return _.every enoughUserVideos, (key, val) =>
+      console.log "this hsould be a user name" + val
+      return @username >= val
+
+  createQuiz: =>
+    enoughUserVideos = @getLongVideoArrays()
+    if _.size(enoughUserVideos) < 2
+      console.error "Trying to create a quiz, but without enough user videos!"
+      return
+    if _.size(enoughUserVideos) > 2
+      console.error "There are more than 2 users, this is bad!"  # TODO maybe handle this better
+    if not @responsibleForMakingQuiz(enoughUserVideos)
+      console.log 'not responsible'
+      return
+    console.log 'responsible, making quiz'
+    # This user is actually responsible for making the quiz
+    # Choose a random video
+    randomVideo = _.sample(enoughUserVideos[@username])  # TODO choose 2 videos
+    # TODO remove the video from the firebase list of videos, and remove it from both clients too! listen to child_removed
+    @fbInteractor.fb_user_quiz_one.set(randomVideo)
+
+
+
+class window.EmotionVideoStore
+  """Stores a map from each user to a list of that user's emotion videos"""
+
+  constructor: ->
+    @videos = {}
+
+  addVideoSnapshot: (data) =>
+    if data.fromUser not in @videos
+      @videos[data.fromUser] = []
+    @videos[data.fromUser].push(data)
+    console.log "videos: "
+    console.log @videos
 
 class window.ChatRoom
   """Main class to control the chat room UI of messages and video"""
   constructor: (@fbInteractor, @videoRecorder) ->
-    @quizCoordinator = new QuizCoordinator($("#quiz_container"))
+    @emotionVideoStore = new EmotionVideoStore()
+    @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor)
 
     # Listen to Firebase events
     @fbInteractor.fb_instance_users.on "child_added", (snapshot) =>
@@ -155,8 +200,24 @@ class window.ChatRoom
     @fbInteractor.fb_instance_stream.on "child_added", (snapshot) =>
       @displayMessage(snapshot.val())
 
-    @fbInteractor.fb_quiz_stream.on "child_added", (snapshot) =>
-      @quizCoordinator.handleIncomingQuiz(snapshot.val())
+    @fbInteractor.fb_user_video_list.on "child_added", (snapshot) =>  # TODO listen to removed as well to update list
+      @emotionVideoStore.addVideoSnapshot(snapshot.val())
+      if @quizCoordinator.readyForQuiz()  # TODO move this so that it fires randomly.
+        console.log "Ready for quiz!"
+        @quizCoordinator.createQuiz()
+
+    @fbInteractor.fb_user_quiz_one.on "value", (snapshot) =>
+      console.log "snapshot"
+      snapshotVal = snapshot.val()
+      console.log snapshotVal
+      if not snapshotVal
+        return
+      if snapshotVal.status == 'new quiz'
+        @quizCoordinator.handleIncomingQuiz(snapshotVal)
+      if snapshotVal.status == 'new guess'
+        @quizCoordinator.handleGuessMade(snapshotVal)
+      # Otherwise status is "quiz over"
+
 
     @submissionEl = $("#submission input")
 
@@ -177,25 +238,22 @@ class window.ChatRoom
   setupSubmissionBox: =>
     # bind submission box
     $("#submission input").on "keydown", (event) =>
-      if (event.which == 13)  # ENTER
+      if event.which == 13  # ENTER
         message = @submissionEl.val()
         console.log(message)
-        console.log(EmotionProcessor.getEmoticon(message))
-        if @quizCoordinator.giveQuiz(message)
-          console.log "doing quiz"
-          [redactedMessage, _] = EmotionProcessor.redactEmoticons(message)
-          @fbInteractor.fb_instance_stream.push
-            m: @username + ": " + redactedMessage  # Send the message with smiley redacted
-            c: @userColor
-          @fbInteractor.fb_quiz_stream.push
+        emoticon = EmotionProcessor.getEmoticon(message)
+        if emoticon
+          @fbInteractor.fb_user_video_list.push
             fromUser: @username
             c: @userColor
             v: @videoRecorder.curVideoBlob
-            emoticon: EmotionProcessor.getEmoticon(message)
-        else
-          @fbInteractor.fb_instance_stream.push
-            m: @username + ": " + message
-            c: @userColor
+            emoticon: emoticon
+            choices: EmotionProcessor.makeQuizChoices(emoticon)
+            status: "new quiz"
+          [message, _] = EmotionProcessor.redactEmoticons(message) # Send the message with smiley redacted
+        @fbInteractor.fb_instance_stream.push
+          m: @username + ": " + message
+          c: @userColor
         @submissionEl.val("")
 
   scrollToBottom: (wait_time) =>

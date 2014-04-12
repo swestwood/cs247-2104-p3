@@ -22,7 +22,6 @@ a {
 }
 
 #quiz_container {
-  background-color: #FF99FF;
   .quiz-choice {
     float:left;
     background-color:#72b4cc;
@@ -38,17 +37,24 @@ a {
     text-decoration:none;
     text-shadow:0px 1px 0px #3d768a;
   }
-  &.active .quiz-choice:hover {  // Only show the hover for an active quiz
-    background-color: #408c99;;
-    position:relative;
-    top:1px;
+  &.enabled {
+    .quiz-choice {
+      cursor: pointer;
+    }
+    background-color: #FF99FF;
+    &.active .quiz-choice:hover {  // Only show the hover for an active quiz
+      background-color: #FFFFF0;
+    }
+    &.active .quiz-choice:hover {  // Only show the hover for an active quiz
+      background-color: #408c99;;
+      position:relative;
+      top:1px;
+    }
+    &.active .quiz_choice:active {
+      position:relative;
+      top:1px;
+    }
   }
-
-  &.active .quiz_choice:active {
-    position:relative;
-    top:1px;
-  }
-
   &.inactive .quiz-choice {
     background-color: #72b4cc; /* Gray out when inactive*/
     cursor: default;
