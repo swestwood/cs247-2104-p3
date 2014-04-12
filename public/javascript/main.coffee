@@ -46,6 +46,25 @@ class window.FirebaseInteractor
     @fb_instance_stream = @fb_new_chat_room.child('stream')
     @fb_quiz_stream = @fb_new_chat_room.child('quiz')
 
+class window.PowerupCoordinator
+  """Manipulates Powerup objects for the game."""
+
+  constructor: (@elem) ->
+    @currentPowerup = null
+
+  handleNewPowerupScreen: =>
+    @currentPowerup = new Powerup(@elem)
+
+class window.Powerup
+  """Builds and renders a single powerup screen."""
+
+  constructor: (@elem) ->
+    @render()
+
+  render: =>
+    context = []
+    html = window.Templates["powerup"](context)
+    @elem.html(html)
 
 class window.Quiz
   """Builds and renders a single quiz."""
@@ -74,7 +93,6 @@ class window.Quiz
     choiceContext = ({"emoticon": choice, "correct": if choice == actualEmoticon then "correct" else "wrong"} for choice in allChoices)
     return choiceContext
 
-
 class window.QuizCoordinator
   """Manipulates Quiz objects for the game."""
 
@@ -92,6 +110,7 @@ class window.QuizCoordinator
       $("#quiz_container").css({"background-color": "#FFCCCC"})
     @currentQuiz = null  # A choice was made, so we are ready for another quiz. TODO set a time so it isn't given too soon..
     @elem.addClass("inactive").removeClass("active")
+    setTimeout (=> @switchScreen false), 1000 
 
   setUserName: (user) =>
     @username = user
@@ -99,6 +118,15 @@ class window.QuizCoordinator
   giveQuiz: (msg) =>
     # TODO modify based on probability. Don't do the face game with multiple emoticons
     return EmotionProcessor.countEmoticons(msg) == 1
+
+  switchScreen: (showQuiz) =>
+    if showQuiz
+      $('#quiz_container').show()
+      $('#powerup_container').hide()
+    else 
+      $('#quiz_container').hide()
+      @currentPowerup = new Powerup($('#powerup_container'))
+      $('#powerup_container').show() 
 
   handleIncomingQuiz: (snapshot) =>
     console.log "handling incoming quiz"
@@ -110,6 +138,8 @@ class window.QuizCoordinator
     @currentQuiz = new Quiz(snapshot.emoticon, snapshot.v, snapshot.fromUser, @username, @elem)
     @elem.addClass("active").removeClass("inactive")
     @currentQuiz.render()
+    @switchScreen(true)
+    #$("#quiz_container").show();
     $(".quiz-choice").one("click", @respondToAnswerChoice)  # Only listens for one click, then no more.
 
 
