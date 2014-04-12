@@ -6,9 +6,9 @@ window.buildTemplates = =>
   
   # Treat these as HTML files
   quizHandlebars = """
-  <div class="quiz_title">Quiz time!</div>
+  <div class="quiz_title">Face off!</div>
   <p>How well do you know {{fromUser}}?</p>
-  <video autoplay="" loop="" width="320"><source src="{{videoUrl}}" type="video/webm"></video>
+  <video autoplay="" loop="" width="100"><source src="{{videoUrl}}" type="video/webm"></video>
   <div id="quiz-buttons" class="quiz-choices">
     {{#each quizChoices}}
       <button class='quiz-choice {{correct}}'>{{emoticon}}</button>

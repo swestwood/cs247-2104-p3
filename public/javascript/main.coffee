@@ -22,7 +22,7 @@ window.EMOTICON_MAP =
   "heart": ["<3"]
   "broken": ["</3"]
 
-window.VIDEO_LENGTH_MS = 1000  # The length of time that the snippets are recorded
+window.VIDEO_LENGTH_MS = 2500  # The length of time that the snippets are recorded
 
 window.NUMBER_WRONG_CHOICES = 3  # The number of wrong choices shown for a quiz
 
@@ -47,7 +47,8 @@ class window.FirebaseInteractor
     @fb_instance_users = @fb_new_chat_room.child('users')
     @fb_instance_stream = @fb_new_chat_room.child('stream')
     @fb_user_video_list = @fb_new_chat_room.child('user_video_list')
-    @fb_user_quiz_one = @fb_new_chat_room.child('user_quiz_one')
+    @fb_user_quiz_one = @fb_new_chat_room.child('user_quiz_one')  # TODO check if these exist separately
+    @fb_user_quiz_two = @fb_new_chat_room.child('user_quiz_two')
 
 class window.Quiz
   """Builds and renders a single quiz."""
@@ -74,37 +75,50 @@ class window.QuizCoordinator
     # @currentQuiz = null  # Non-null if a quiz is currently being taken by the user
     @username = null  # Should be set by the chatroom as soon as a username is given.
 
-  respondToAnswerChoice: (evt) =>
-    $("#quiz_container .quiz-choice").off("click", @respondToAnswerChoice)  # Only listen once.
+  getQuizInteractor: (quizName) =>
+    user_quiz_fb = if quizName == "quiz_one" then @fbInteractor.fb_user_quiz_one else @fbInteractor.fb_user_quiz_two
+    return user_quiz_fb
+
+  respondToAnswerChoice: (evt, quizChoiceSelector, quizName) =>
     # return if @currentQuiz == null
+    $(quizChoiceSelector).off("click")  # Only listen once. TODO test
     isCorrect = $(evt.target).hasClass("correct")
     console.log $(evt.target).html()
-    @fbInteractor.fb_user_quiz_one.update({"status": "new guess", "guess": $(evt.target).html(), "guessCorrect": isCorrect})
+    console.log "quiz name: " + quizName
+    @getQuizInteractor(quizName).update({"status": "new guess", "guess": $(evt.target).html(), "guessCorrect": isCorrect})
 
-  handleGuessMade: (snapshot) =>
+  handleGuessMade: (snapshot, quizName) =>
+    quizEl = $(@elem.find("." + quizName))
     if snapshot.guessCorrect
-      $("#quiz_container").css({"background-color": "green"})
+      quizEl.css({"background-color": "green"})
     else
-      $("#quiz_container").css({"background-color": "#FFCCCC"})
-    @elem.addClass("inactive").removeClass("active")
-    @fbInteractor.fb_user_quiz_one.update({"status": "quiz over"})
+      quizEl.css({"background-color": "#FFCCCC"})
+    quizEl.addClass("inactive").removeClass("active")
+    @getQuizInteractor(quizName).update({"status": "quiz over"})
 
   setUserName: (user) =>
     @username = user
 
-  handleIncomingQuiz: (snapshot) =>
+  handleIncomingQuiz: (snapshot, quizName) =>
     console.log "handling incoming quiz"
-    $("#quiz_container").css({"background-color": "lightgray"})
-    quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, @elem, snapshot.status)
+    quizEl = $(@elem.find("." + quizName))
+    quizEl.css({"background-color": "lightgray"})
+    quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, quizEl, snapshot.status)
     quiz.render()
-    $("#quiz_container").addClass("active").removeClass("inactive")
+    quizEl.addClass("active").removeClass("inactive")
     if snapshot.fromUser == @username
-      $("#quiz_container").removeClass("enabled")
-      $("#quiz_container").css({"background-color": "lightgray"})
+      quizEl.removeClass("enabled")
+      quizEl.css({"background-color": "lightgray"})
     else
-      $("#quiz_container").addClass("enabled")
-      $("#quiz_container").css({"background-color": "lightblue"})
-      $("#quiz_container .quiz-choice").on("click", @respondToAnswerChoice)  # Only listens for one click, then no more.
+      quizEl.addClass("enabled")
+      quizEl.css({"background-color": "lightblue"})
+      quizChoiceSelector = "." + quizName + " .quiz-choice"
+      console.log "selector here: " + quizChoiceSelector
+      $(quizChoiceSelector).on "click", (evt) =>
+        console.log 'removing'
+        console.log quizChoiceSelector
+        @respondToAnswerChoice(evt, quizChoiceSelector, quizName)
+
 
   getLongVideoArrays: =>
     longVideoArrs = {}
@@ -120,27 +134,30 @@ class window.QuizCoordinator
     enoughUserVideos = @getLongVideoArrays()
     return _.size(enoughUserVideos) >= 2
 
-  responsibleForMakingQuiz: (enoughUserVideos) =>
-    return _.every enoughUserVideos, (key, val) =>
-      console.log "this hsould be a user name" + val
-      return @username >= val
+  responsibleForMakingQuiz: (usernames) =>
+    """Responsibility for making the quiz is determined by lexicographic ordering"""
+    return _.every usernames, (otherUser) =>
+      return @username >= otherUser
 
   createQuiz: =>
     enoughUserVideos = @getLongVideoArrays()
-    if _.size(enoughUserVideos) < 2
+    usernames = _.keys(enoughUserVideos)
+    if _.size(usernames) < 2
       console.error "Trying to create a quiz, but without enough user videos!"
       return
-    if _.size(enoughUserVideos) > 2
+    if _.size(usernames) > 2
       console.error "There are more than 2 users, this is bad!"  # TODO maybe handle this better
-    if not @responsibleForMakingQuiz(enoughUserVideos)
+    if not @responsibleForMakingQuiz(usernames)
       console.log 'not responsible'
       return
     console.log 'responsible, making quiz'
     # This user is actually responsible for making the quiz
     # Choose a random video
-    randomVideo = _.sample(enoughUserVideos[@username])  # TODO choose 2 videos
+    randomVideoOne = _.sample(enoughUserVideos[usernames[0]])  # TODO choose 2 videos
     # TODO remove the video from the firebase list of videos, and remove it from both clients too! listen to child_removed
-    @fbInteractor.fb_user_quiz_one.set(randomVideo)
+    @fbInteractor.fb_user_quiz_one.set(randomVideoOne)
+    randomVideoTwo = _.sample(enoughUserVideos[usernames[1]])  # TODO choose 2 videos
+    @fbInteractor.fb_user_quiz_two.set(randomVideoTwo)
 
 
 
@@ -177,19 +194,25 @@ class window.ChatRoom
         @quizCoordinator.createQuiz()
 
     @fbInteractor.fb_user_quiz_one.on "value", (snapshot) =>
-      console.log "snapshot"
-      snapshotVal = snapshot.val()
-      console.log snapshotVal
-      if not snapshotVal
-        return
-      if snapshotVal.status == 'new quiz'
-        @quizCoordinator.handleIncomingQuiz(snapshotVal)
-      if snapshotVal.status == 'new guess'
-        @quizCoordinator.handleGuessMade(snapshotVal)
-      # Otherwise status is "quiz over"
+      @respondToFbQuiz(snapshot, "quiz_one")
 
+
+    @fbInteractor.fb_user_quiz_two.on "value", (snapshot) =>
+      @respondToFbQuiz(snapshot, "quiz_two")
 
     @submissionEl = $("#submission input")
+
+  respondToFbQuiz: (snapshot, quizName) =>
+    console.log "snapshot " + quizName
+    if not snapshot or not snapshot.val()
+      return
+    snapshotVal = snapshot.val()
+    console.log snapshotVal
+    if snapshotVal.status == 'new quiz'
+      @quizCoordinator.handleIncomingQuiz(snapshotVal, quizName)
+    if snapshotVal.status == 'new guess'
+      @quizCoordinator.handleGuessMade(snapshotVal, quizName)
+    # Otherwise status is "quiz over"
 
   init: =>
     url = document.location.origin+"/#"+@fbInteractor.fb_chat_room_id
@@ -257,15 +280,15 @@ class window.ChatRoom
       video.appendChild(source)
       document.getElementById("conversation").appendChild(video)
 
-      #Create copy of video node. TEMPORARY!!! TODO
-      quiz_video = video.cloneNode(true);
-      quiz_video.className += "vid_quiz"
-      quiz_video.autoplay = true
-      quiz_video.controls = false # optional
-      quiz_video.loop = true
-      quiz_video.width = 350
-      document.getElementById("video_box").appendChild(quiz_video)
-      #$("#quiz_mode").show();
+      # #Create copy of video node. TEMPORARY!!! TODO
+      # quiz_video = video.cloneNode(true);
+      # quiz_video.className += "vid_quiz"
+      # quiz_video.autoplay = true
+      # quiz_video.controls = false # optional
+      # quiz_video.loop = true
+      # quiz_video.width = 350
+      # document.getElementById("video_box").appendChild(quiz_video)
+      # #$("#quiz_mode").show();
 
     # Scroll to the bottom every time we display a new message
     @scrollToBottom(0);
