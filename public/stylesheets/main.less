@@ -19,9 +19,19 @@ a {
 
 #quiz_container {
   .quiz-choice {
-    display: inline-block;
-    padding: 40px 80px;
-    background-color: #F0F0FF;
+    float:left;
+    background-color:#72b4cc;
+    border:1px solid #29668f;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    font-family:arial;
+    font-size:17px;
+    padding:none;
+    width:80px;
+    height:40px;
+    text-decoration:none;
+    text-shadow:0px 1px 0px #3d768a;
   }
   &.enabled {
     .quiz-choice {
@@ -31,14 +41,28 @@ a {
     &.active .quiz-choice:hover {  // Only show the hover for an active quiz
       background-color: #FFFFF0;
     }
+    &.active .quiz-choice:hover {  // Only show the hover for an active quiz
+      background-color: #408c99;;
+      position:relative;
+      top:1px;
+    }
+    &.active .quiz_choice:active {
+      position:relative;
+      top:1px;
+    }
   }
   &.inactive .quiz-choice {
-    background-color: #DDD; /* Gray out when inactive*/
+    background-color: #72b4cc; /* Gray out when inactive*/
     cursor: default;
     &.correct {
       background-color: lightgreen;  // Show the correct answer
     }
   }
+}
+
+.quiz-choices {
+  margin: 0 auto;
+  width:320px;
 }
 
 #second_counter{
@@ -53,6 +77,64 @@ a {
   padding: 10px 10px 80px;
   overflow-y: scroll;
   height: 100%;
+}
+
+#quiz_container {
+  position:absolute;
+  top: 0px;
+  left: 60%;
+  border-left:1px solid #000;
+  height: 100%;
+  width: 40%;
+  position: fixed;
+  background-color: yellow;
+  border: ;
+  text-align:center;
+}
+
+.quiz_title {
+  text-align: center;
+  position: relative;
+  font-size: 26px;
+}
+
+#video_box {
+  margin: 0 auto;
+  width: 350px;
+}
+
+.vid_quiz {
+  margin: 0 auto;
+  width: 350px;
+}
+
+#buttons {
+  margin: 0 auto;
+  width: 350px;
+}
+
+.quiz_button {
+  float:left;
+  background-color:#72b4cc;
+  border:1px solid #29668f;
+  display:inline-block;
+  cursor:pointer;
+  color:#ffffff;
+  font-family:arial;
+  font-size:17px;
+  padding:none;
+  width:70px;
+  height:40px;
+  text-decoration:none;
+  text-shadow:0px 1px 0px #3d768a;
+}
+
+.quiz_button:hover {
+  background-color:#408c99;
+}
+.quiz_button:active {
+  position:relative;
+  top:1px;
 }
 
 #submission{

@@ -97,7 +97,7 @@ class window.QuizCoordinator
     $("#quiz_container").css({"background-color": "lightgray"})
     quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, @elem, snapshot.status)
     quiz.render()
-    $("#quiz_container").removeClass("active").removeClass("inactive")
+    $("#quiz_container").addClass("active").removeClass("inactive")
     if snapshot.fromUser == @username
       $("#quiz_container").removeClass("enabled")
       $("#quiz_container").css({"background-color": "lightgray"})
@@ -256,6 +256,17 @@ class window.ChatRoom
       [source, video] = @createVideoElem(data.v)
       video.appendChild(source)
       document.getElementById("conversation").appendChild(video)
+
+      #Create copy of video node. TEMPORARY!!! TODO
+      quiz_video = video.cloneNode(true);
+      quiz_video.className += "vid_quiz"
+      quiz_video.autoplay = true
+      quiz_video.controls = false # optional
+      quiz_video.loop = true
+      quiz_video.width = 350
+      document.getElementById("video_box").appendChild(quiz_video)
+      #$("#quiz_mode").show();
+
     # Scroll to the bottom every time we display a new message
     @scrollToBottom(0);
 
