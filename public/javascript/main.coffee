@@ -49,15 +49,6 @@ class window.FirebaseInteractor
     @fb_user_video_list = @fb_new_chat_room.child('user_video_list')
     @fb_user_quiz_one = @fb_new_chat_room.child('user_quiz_one')
 
-class window.PowerupCoordinator
-  """Manipulates Powerup objects for the game."""
-
-  constructor: (@elem) ->
-    @currentPowerup = null
-
-  handleNewPowerupScreen: =>
-    @currentPowerup = new Powerup(@elem)
-
 class window.Powerup
   """Builds and renders a single powerup screen."""
 
@@ -114,6 +105,7 @@ class window.QuizCoordinator
 
   switchScreen: (showQuiz) =>
     if showQuiz
+      console.log("hello")
       $('#quiz_container').show()
       $('#powerup_container').hide()
     else 
@@ -124,9 +116,10 @@ class window.QuizCoordinator
   handleIncomingQuiz: (snapshot) =>
     console.log "handling incoming quiz"
     $("#quiz_container").css({"background-color": "lightgray"})
-    @switchScreen(true)
     quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, @elem, snapshot.status)
     quiz.render()
+    console.log("showing")
+    @switchScreen(true)
     $("#quiz_container").addClass("active").removeClass("inactive")
     if snapshot.fromUser == @username
       $("#quiz_container").removeClass("enabled")
@@ -135,6 +128,7 @@ class window.QuizCoordinator
       $("#quiz_container").addClass("enabled")
       $("#quiz_container").css({"background-color": "lightblue"})
       $("#quiz_container .quiz-choice").on("click", @respondToAnswerChoice)  # Only listens for one click, then no more.
+
 
   getLongVideoArrays: =>
     longVideoArrs = {}
@@ -192,6 +186,7 @@ class window.ChatRoom
   constructor: (@fbInteractor, @videoRecorder) ->
     @emotionVideoStore = new EmotionVideoStore()
     @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor)
+    @currentPowerup = new Powerup($('#powerup_container'))
 
     # Listen to Firebase events
     @fbInteractor.fb_instance_users.on "child_added", (snapshot) =>
