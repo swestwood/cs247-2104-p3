@@ -4,8 +4,8 @@
 # Compile by running coffee -wc *.coffee to generate main.js and compile other .coffee files in the directory.
 # For CS247, Spring 2014
 
-# Drawn from http://en.wikipedia.org/wiki/List_of_emoticons
 
+# Drawn from http://en.wikipedia.org/wiki/List_of_emoticons
 window.EMOTICON_MAP =
   "angry": [">:(", ">_<"]  # Sort roughly so that the full emoticon is captured, ie ">:(" does not first match ":("
   "crying": [":'-(", ":'("]
@@ -54,7 +54,7 @@ class window.Powerup
   """Builds and renders a single powerup screen."""
 
   constructor: (@elem) ->
-    @render()
+    # Do nothing
 
   render: =>
     context = []
@@ -105,20 +105,22 @@ class window.QuizCoordinator
       quizEl.css({"background-color": "#FFCCCC"})
     quizEl.addClass("inactive").removeClass("active")
     @getQuizInteractor(quizName).update({"status": "quiz over"})
-    # setTimeout (=> @switchScreen false), 1000   # TODO add back in?
+    if $(".quiz.inactive").size() == 2  # TODO hacky -- basically if both quizzes are now inactive
+      console.log "switching screens back to powerup"
+      setTimeout (=> @switchScreen(false)), 2000   # Show the powerup screen now.
 
   setUserName: (user) =>
     @username = user
 
   switchScreen: (showQuiz) =>
     if showQuiz
-      console.log("hello")
       $('#quiz_container').show()
       $('#powerup_container').hide()
     else 
       $('#quiz_container').hide()
       @currentPowerup = new Powerup($('#powerup_container'))
-      $('#powerup_container').show() 
+      @currentPowerup.render()
+      $('#powerup_container').show()
 
   handleIncomingQuiz: (snapshot, quizName) =>
     console.log "handling incoming quiz"
@@ -127,7 +129,7 @@ class window.QuizCoordinator
     quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, quizEl, snapshot.status)
     quiz.render()
     quizEl.addClass("active").removeClass("inactive")
-    # @switchScreen(true)  # TODO add in?
+    @switchScreen(true)
     if snapshot.fromUser == @username
       quizEl.removeClass("enabled")
       quizEl.css({"background-color": "lightgray"})
@@ -203,6 +205,7 @@ class window.ChatRoom
     @emotionVideoStore = new EmotionVideoStore()
     @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor)
     @currentPowerup = new Powerup($('#powerup_container'))
+    @currentPowerup.render()
 
     # Listen to Firebase events
     @fbInteractor.fb_instance_users.on "child_added", (snapshot) =>
