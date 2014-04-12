@@ -56,7 +56,7 @@ class ChatRoom
   init: =>
     @displayMessage({m: "Share this url with your friend to join this chat: "+ document.location.origin+"/#"+@fbInteractor.fb_chat_room_id, c: "red"})
     # Block until user name entered
-    @username = window.prompt("Welcome, warrior! please declare your name?")
+    #@username = window.prompt("Welcome, warrior! please declare your name?")
     if not @username
       @username = "anonymous"+Math.floor(Math.random()*1111)
     @userColor = "#"+((1<<24)*Math.random()|0).toString(16) # Choose random color
@@ -121,6 +121,17 @@ class ChatRoom
       [source, video] = @createVideoElem(data.v)
       video.appendChild(source)
       document.getElementById("conversation").appendChild(video)
+
+      #Create copy of video node. TEMPORARY!!! TODO
+      quiz_video = video.cloneNode(true);
+      quiz_video.className += "vid_quiz"
+      quiz_video.autoplay = true
+      quiz_video.controls = false # optional
+      quiz_video.loop = true
+      quiz_video.width = 350
+      document.getElementById("video_box").appendChild(quiz_video)
+      #$("#quiz_mode").show();
+
     # Scroll to the bottom every time we display a new message
     @scrollToBottom(0);
 
