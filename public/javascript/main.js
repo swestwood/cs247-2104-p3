@@ -179,8 +179,8 @@
         seconds = 7;
         $("#quiz-done-area").show().html("Finished the quiz! Moving on in " + seconds + " seconds...");
         return setTimeout(function() {
-          _this.switchScreen(false);
-          return $("#quiz-done-area").html("").hide();
+          $("#quiz-done-area").html("").hide();
+          return _this.switchScreen(false);
         }, seconds * 1000);
       }
     };
@@ -197,8 +197,8 @@
         $('#quiz_container').hide();
         this.currentPowerup = new Powerup($('#powerup_container'));
         this.currentPowerup.render();
-        this.updatePowerupScreenFcn();
-        return $('#powerup_container').show();
+        $('#powerup_container').show();
+        return this.updatePowerupScreenFcn();
       }
     };
 

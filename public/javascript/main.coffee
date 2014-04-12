@@ -121,8 +121,8 @@ class window.QuizCoordinator
       seconds = 7
       $("#quiz-done-area").show().html("Finished the quiz! Moving on in " + seconds + " seconds...")
       setTimeout =>
-        @switchScreen(false)
         $("#quiz-done-area").html("").hide()
+        @switchScreen(false)
       , seconds*1000   # Show the powerup screen now.
       
 
@@ -137,8 +137,8 @@ class window.QuizCoordinator
       $('#quiz_container').hide()
       @currentPowerup = new Powerup($('#powerup_container'))
       @currentPowerup.render()
-      @updatePowerupScreenFcn()
       $('#powerup_container').show()
+      @updatePowerupScreenFcn()
 
   handleIncomingQuiz: (snapshot, quizName) =>
     @emotionVideoStore.removeVideoItem(snapshot, @fbInteractor.fb_user_video_list)
