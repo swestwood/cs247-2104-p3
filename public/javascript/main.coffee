@@ -22,7 +22,7 @@ window.EMOTICON_MAP =
   "heart": ["<3"]
   "broken": ["</3"]
 
-window.VIDEO_LENGTH_MS = 2500  # The length of time that the snippets are recorded
+window.VIDEO_LENGTH_MS = 1000  # The length of time that the snippets are recorded  # TODO make longer after testing
 
 window.NUMBER_WRONG_CHOICES = 3  # The number of wrong choices shown for a quiz
 
@@ -87,6 +87,8 @@ class window.QuizCoordinator
 
   getQuizInteractor: (quizName) =>
     user_quiz_fb = if quizName == "quiz_one" then @fbInteractor.fb_user_quiz_one else @fbInteractor.fb_user_quiz_two
+    console.log "user item"
+    console.log user_quiz_fb
     return user_quiz_fb
 
   respondToAnswerChoice: (evt, quizChoiceSelector, quizName) =>
@@ -123,6 +125,7 @@ class window.QuizCoordinator
       $('#powerup_container').show()
 
   handleIncomingQuiz: (snapshot, quizName) =>
+    @emotionVideoStore.removeVideoItem(snapshot, @fbInteractor.fb_user_video_list)
     console.log "handling incoming quiz"
     quizEl = $(@elem.find("." + quizName))
     quizEl.css({"background-color": "lightgray"})
@@ -148,7 +151,6 @@ class window.QuizCoordinator
   getLongVideoArrays: =>
     longVideoArrs = {}
     for key, val of @emotionVideoStore.videos
-      console.log "this hsould be a user name also " + key
       if _.size(val) >= MIN_REQUIRED_VIDEOS_FOR_QUIZ
         longVideoArrs[key] = val
     return longVideoArrs
@@ -191,13 +193,40 @@ class window.EmotionVideoStore
 
   constructor: ->
     @videos = {}
+    @fbResults = {}  # Store the result of pushing on the data so that we can remove it later
 
   addVideoSnapshot: (data) =>
-    if data.fromUser not in @videos
+    if data.fromUser not of @videos
       @videos[data.fromUser] = []
     @videos[data.fromUser].push(data)
     console.log "videos: "
     console.log @videos
+
+  storePushedFb: (pushedFb, quickId) =>
+    @fbResults[quickId] = pushedFb  # Store a mapping
+    console.log quickId
+    console.log @fbResults
+
+  removeVideoSnapshot: (data) =>
+    if data.fromUser not of @videos
+      return
+    @videos[data.fromUser] =
+    @videos[data.fromUser] = _.reject @videos[data.fromUser], (item) =>
+      return item.quickId == data.quickId
+    console.log "((((((((( VIDEO REMOVED! videos: ))))))))) "
+    console.log @videos
+    console.log data
+
+  removeVideoItem: (video, fb_video_list) =>
+    if video.quickId not of @fbResults
+      return
+    pushedFb = @fbResults[video.quickId]
+    if _.isUndefined(pushedFb)
+      delete @fbResults[video.quickId]
+      return
+    pushedFb.remove()
+    delete @fbResults[video.quickId]  # Remove from storing locally
+    # Will be removed from local video store in the callback after deleting from Firebase.
 
 class window.ChatRoom
   """Main class to control the chat room UI of messages and video"""
@@ -220,6 +249,9 @@ class window.ChatRoom
         console.log "Ready for quiz!"
         @quizCoordinator.createQuiz()
 
+    @fbInteractor.fb_user_video_list.on "child_removed", (snapshot) =>
+      @emotionVideoStore.removeVideoSnapshot(snapshot.val())
+
     @fbInteractor.fb_user_quiz_one.on "value", (snapshot) =>
       @respondToFbQuiz(snapshot, "quiz_one")
 
@@ -230,11 +262,9 @@ class window.ChatRoom
     @submissionEl = $("#submission input")
 
   respondToFbQuiz: (snapshot, quizName) =>
-    console.log "snapshot " + quizName
     if not snapshot or not snapshot.val()
       return
     snapshotVal = snapshot.val()
-    console.log snapshotVal
     if snapshotVal.status == 'new quiz'
       @quizCoordinator.handleIncomingQuiz(snapshotVal, quizName)
     if snapshotVal.status == 'new guess'
@@ -263,14 +293,20 @@ class window.ChatRoom
         console.log(message)
         emoticon = EmotionProcessor.getEmoticon(message)
         if emoticon
-          @fbInteractor.fb_user_video_list.push
+          videoToPush =
             fromUser: @username
             c: @userColor
             v: @videoRecorder.curVideoBlob
             emoticon: emoticon
             choices: EmotionProcessor.makeQuizChoices(emoticon)
             status: "new quiz"
+            quickId: Math.floor(Math.random()*1111)
+          pushedFb = @fbInteractor.fb_user_video_list.push()
+          pushedFb.set(videoToPush)
           [message, _] = EmotionProcessor.redactEmoticons(message) # Send the message with smiley redacted
+          # We need to store the name so that we can retrieve it and remove the video
+          # from the video list later on
+          @emotionVideoStore.storePushedFb(pushedFb, videoToPush.quickId)
         @fbInteractor.fb_instance_stream.push
           m: @username + ": " + message
           c: @userColor
