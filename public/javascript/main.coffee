@@ -47,7 +47,7 @@ class window.FirebaseInteractor
     @fb_instance_users = @fb_new_chat_room.child('users')
     @fb_instance_stream = @fb_new_chat_room.child('stream')
     @fb_user_video_list = @fb_new_chat_room.child('user_video_list')
-    @fb_user_quiz_one = @fb_new_chat_room.child('user_quiz_one')  # TODO check if these exist separately
+    @fb_user_quiz_one = @fb_new_chat_room.child('user_quiz_one')
     @fb_user_quiz_two = @fb_new_chat_room.child('user_quiz_two')
 
 class window.Powerup
@@ -102,22 +102,30 @@ class window.QuizCoordinator
     # return if @currentQuiz == null
     $(quizChoiceSelector).off("click")  # Only listen once. TODO test
     isCorrect = $(evt.target).hasClass("correct")
-    console.log $(evt.target).html()
-    console.log "quiz name: " + quizName
-    @getQuizInteractor(quizName).update({"status": "new guess", "guess": $(evt.target).html(), "guessCorrect": isCorrect})
+    chosenFace = $(evt.target).html()
+    @getQuizInteractor(quizName).update({"status": "new guess", "guess": $(evt.target).html(), "guessCorrect": isCorrect, "chosenFace": chosenFace})
 
   handleGuessMade: (snapshot, quizName) =>
     quizEl = $(@elem.find("." + quizName))
     if snapshot.guessCorrect
+      quizEl.addClass("guessedCorrectly")
       quizEl.css({"background-color": "green"})
     else
+      quizEl.addClass("guessedWrong")
       quizEl.css({"background-color": "#FFCCCC"})
+      for choiceElem in quizEl.find(".quiz-choice")
+        choiceElem = $(choiceElem)
+        if choiceElem.html() == snapshot.chosenFace
+          choiceElem.addClass("wrongChoiceThatWasGuessed")
+
+
     quizEl.addClass("inactive").removeClass("active")
     @getQuizInteractor(quizName).update({"status": "quiz over"})
+
+
     if $(".quiz.inactive").size() == 2  # TODO hacky -- basically if both quizzes are now inactive, they can end the quiz
       console.log "switching screens back to powerup"
       seconds = 7
-      console.log "showing it"
       $("#quiz-done-area").show().html("Finished the quiz! Moving on in " + seconds + " seconds...")
       setTimeout =>
         @switchScreen(false)

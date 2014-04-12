@@ -67,6 +67,7 @@ a {
     height:40px;
     text-decoration:none;
     text-shadow:0px 1px 0px #3d768a;
+
   }
   .enabled {
     .quiz-choice {
@@ -87,6 +88,9 @@ a {
     cursor: default;
     &.correct {
       background-color: lightgreen;  // Show the correct answer
+    }
+    &.wrongChoiceThatWasGuessed {
+      background-color: #FF3333;  // show the guessed wrong answer
     }
   }
 }
