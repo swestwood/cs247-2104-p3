@@ -187,7 +187,7 @@ class window.QuizCoordinator
       console.error "Trying to create a quiz, but without enough user videos!"
       return
     if _.size(usernames) > 2
-      console.error "There are more than 2 users, this is bad!"  # TODO maybe handle this better
+      console.error "There are more than 2 users, this may be bad!"  # TODO maybe handle this better
     if not @responsibleForMakingQuiz(usernames)
       console.log 'not responsible'
       return
