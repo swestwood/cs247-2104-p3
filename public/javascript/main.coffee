@@ -102,10 +102,10 @@ class window.QuizCoordinator
     quizEl = $(@elem.find("." + quizName))
     if snapshot.guessCorrect
       quizEl.addClass("guessedCorrectly")
-      quizEl.css({"background-color": "green"})
+      quizEl.css({"background-color": "#5fb079"})
     else
       quizEl.addClass("guessedWrong")
-      quizEl.css({"background-color": "#FFCCCC"})
+      quizEl.css({"background-color": "#ee7e7e"})
       for choiceElem in quizEl.find(".quiz-choice")
         choiceElem = $(choiceElem)
         if choiceElem.html() == snapshot.chosenFace
@@ -144,17 +144,17 @@ class window.QuizCoordinator
     @emotionVideoStore.removeVideoItem(snapshot, @fbInteractor.fb_user_video_list)
     console.log "handling incoming quiz"
     quizEl = $(@elem.find("." + quizName))
-    quizEl.css({"background-color": "lightgray"})
+    quizEl.css({"background-color": "#818181"})
     quiz = new Quiz(snapshot.emoticon, snapshot.choices, snapshot.v, snapshot.fromUser, @username, quizEl, snapshot.status, @username)
     quiz.render()
     quizEl.addClass("active").removeClass("inactive")
     @switchScreen(true)
     if snapshot.fromUser == @username
       quizEl.removeClass("enabled")
-      quizEl.css({"background-color": "lightgray"})
+      quizEl.css({"background-color": "#818181"})
     else
       quizEl.addClass("enabled")
-      quizEl.css({"background-color": "lightblue"})
+      quizEl.css({"background-color": "#9fbcd7"})
       quizChoiceSelector = "." + quizName + " .quiz-choice"
       console.log "selector here: " + quizChoiceSelector
       $(quizChoiceSelector).on "click", (evt) =>
@@ -249,6 +249,8 @@ class window.EmotionVideoStore
 class window.ChatRoom
   """Main class to control the chat room UI of messages and video"""
   constructor: (@fbInteractor, @videoRecorder) ->
+    @lastPoster = null
+    @backgroundColor = "#ffddc7"
     @emotionVideoStore = new EmotionVideoStore()
     @currentPowerup = new Powerup($('#powerup_container'))
     @currentPowerup.render()
@@ -257,12 +259,17 @@ class window.ChatRoom
 
     # Listen to Firebase events
     @fbInteractor.fb_instance_users.on "child_added", (snapshot) =>
-      @displayMessage({m: snapshot.val().name + " joined the room", c: snapshot.val().c})
+      @displayMessage({m: " joined the room", c: snapshot.val().c, u: snapshot.val().name, j: "joined"})
       @emotionVideoStore.addUser(snapshot.val().name)
       @updatePowerupScreen()
 
     @fbInteractor.fb_instance_stream.on "child_added", (snapshot) =>
-      @displayMessage(snapshot.val())
+      msg = snapshot.val().m
+      username = msg.substr(0, msg.indexOf(":"))
+      spliced_message = msg.substr(msg.indexOf(":") + 1)
+      console.log username
+      #snapshot.val().u = username
+      @displayMessage({m: spliced_message, c: snapshot.val().c, u: username})
 
     @fbInteractor.fb_user_video_list.on "child_added", (snapshot) =>
       @emotionVideoStore.addVideoSnapshot(snapshot.val())
@@ -342,6 +349,11 @@ class window.ChatRoom
       @username = "anonymous"+Math.floor(Math.random()*1111)
     @quizCoordinator.setUserName(@username)
     @userColor = "#"+((1<<24)*Math.random()|0).toString(16) # Choose random color
+    console.log("usercolor" + @userColor)
+    @userColor = @userColor.substr(0,1) + '3' + @userColor.substr(2)
+    @userColor = @userColor.substr(0,3) + '3' + @userColor.substr(4)
+    console.log("usercolor" + @userColor)
+
 
     @fbInteractor.fb_instance_users.push({ name: @username,c: @userColor})
     $("#waiting").remove()
@@ -399,24 +411,42 @@ class window.ChatRoom
 
   # creates a message node and appends it to the conversation
   displayMessage: (data) =>
-    newMessage = $("<div class='msg' style='color:"+data.c+"'>"+data.m+"</div>")
-    newMessage.css("background-color", "#87cefa")
-    $("#conversation").append(newMessage)
+    changePoster = false
+    if @lastPoster == null
+      @lastPoster = data.u
+    else
+      if (@lastPoster != data.u)
+        @lastPoster = data.u
+        #swap background colors
+        if @backgroundColor == "#f8ede6"
+          @backgroundColor = "#ffddc7"
+        else @backgroundColor = "#f8ede6"
+        changePoster = true
+    console.log data.j
+    if changePoster
+      if data.j == "joined"
+        # poster just joined the room
+        newHeader = $("<div class='msg' style='color:"+data.c+"'>"+data.u+data.m+"</div>")
+        newMessage = null
+      else
+        newHeader = $("<div class='msg' style='color:"+data.c+"'>"+data.u+"</div>")
+        newMessage = $("<div class='msgtext' style='color:"+data.c+"'>"+data.m+"</div>")
+    else 
+      newHeader = null
+      newMessage = $("<div class='msgtext' style='color:"+data.c+"'>"+data.m+"</div>")
+    
+    if newHeader != null
+      newHeader.css("font-weight", "bold")
+      newHeader.css("font-style", "16px")
+      newHeader.css("background-color", @backgroundColor)
+      $("#conversation").append(newHeader)
+    if newMessage != null
+      newMessage.css("background-color", @backgroundColor)
+      $("#conversation").append(newMessage)
     if data.v
       [source, video] = @createVideoElem(data.v)
       video.appendChild(source)
       document.getElementById("conversation").appendChild(video)
-
-      # #Create copy of video node. TEMPORARY!!! TODO
-      # quiz_video = video.cloneNode(true);
-      # quiz_video.className += "vid_quiz"
-      # quiz_video.autoplay = true
-      # quiz_video.controls = false # optional
-      # quiz_video.loop = true
-      # quiz_video.width = 350
-      # document.getElementById("video_box").appendChild(quiz_video)
-      # #$("#quiz_mode").show();
-
     # Scroll to the bottom every time we display a new message
     @scrollToBottom(0);
 

@@ -9,24 +9,26 @@ window.buildTemplates = =>
   <div class="indiv_quiz_container {{forWhomClass}}">
     <div class="quiz_title">Face off!</div>
     <p>{{challengeMessage}}</p>
-    <video autoplay="" loop="" width="320"><source src="{{videoUrl}}" type="video/webm"></video>
+    <div><video autoplay="" loop="" width="40%"><source src="{{videoUrl}}" type="video/webm"></video></div>
+    <div id="buttons">
     {{#each quizChoices}}
       <button class='quiz-choice {{correct}}'>{{emoticon}}</button>
     {{/each}}
+    </div>
   </div>
   """
 
   powerupHandlebars = """
-  <div class="quiz_title">Use emoticons while chatting to power up for a face off!</div>
+  <div id="powerup_intro"><div class="quiz_title">Use emoticons while chatting to power up for a face off!</div>
   <p>Two users need to have at least {{numRequiredVideos}} emoticon videos available to start!</p>
   <p>Once every user is ready, a quiz will be triggered.</p>
-  <div class="powerup_available_videos">
-
+  <div class="powerup_available_videos"></div>
   </div>
 
   <div class="progress-wrap progress" data-progress-percent="0">
     <div class="progress-bar progress"></div>
   </div>
+  <div id="webcam_stream"></div>
   <p id="powerup_encouragement"></p>
   """
 
