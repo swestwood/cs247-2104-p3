@@ -1,5 +1,5 @@
 body {
-  margin: 10px;
+  margin: 0px;
   font: 15px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
@@ -12,25 +12,25 @@ a {
   text-align:center;
   top:0px;
   left:0px;
-  padding-top:10px;
-  padding-left:10px;
   width:50%;
-  height:140px;
-  background-color:white;
+  height:45px;
+  background-color:#dddddd;
 }
 
-#titlebar h1 {
+#titlebar p {
   width:75%;
   display:inline-block;
-  font-size:60px;
+  font-size:medium;
+  font-weight:bold;
+  color:#666666;
   //top:-80px;
 }
 
 #webcam_stream { 
   border:1px solid black;
-  background-color:lightgrey;
-  width:20%; 
-  height:120px;
+  background-color: #dddddd;
+  width:340px;
+  height:255px;
   display:inline-block;
   padding: 0;
   video{
@@ -39,23 +39,33 @@ a {
 }
 
 #powerup_container {
-  position:relative;
-  background-color: #6495ED;
+  position:absolute;
+  top:0px;
+  width:100%;
+  height:100%;
+  background-color: #9fbcd7;
 }
+
+#powerup_intro {
+  color:#444444;
+  padding:15px;
+}
+
 #quiz-done-area {
   background-color: lightyellow;
 }
 
 #quiz_container {
+  background-color: #becbd8;
+
   .otherPersonGuessing .quiz-choice {
     cursor: default !important; // If the quiz is not ours to take, then we should not show a hand
-    background-color: #BBB;
+    background-color: #818181;
     border: 1px solid #777;
   }
   .quiz-choice {
-    // float:left;
-    background-color:#72b4cc;
-    border:1px solid #29668f;
+    background-color:#4487c4;
+    border:1px solid #0a569c;
     display: block;
     float:left;
     cursor:pointer;
@@ -63,7 +73,7 @@ a {
     font-family:arial;
     font-size:17px;
     padding:none;
-    width:80px;
+    width:60px;
     height:40px;
     text-decoration:none;
     text-shadow:0px 1px 0px #3d768a;
@@ -74,7 +84,7 @@ a {
       cursor: pointer;
     }
     &.active .quiz-choice:hover {  // Only show the hover for an active quiz
-      background-color: #408c99;
+      background-color: #0a569c;
       position:relative;
       top:1px;
     }
@@ -84,10 +94,10 @@ a {
     }
   }
   .inactive .quiz-choice {
-    background-color: #72b4cc; /* Gray out when inactive*/
+    background-color: #818181; /* Gray out when inactive*/
     cursor: default;
     &.correct {
-      background-color: lightgreen;  // Show the correct answer
+      background-color: green;  // Show the correct answer
     }
     &.wrongChoiceThatWasGuessed {
       background-color: #FF3333;  // show the guessed wrong answer
@@ -97,9 +107,26 @@ a {
 
 .quiz-choices {
   margin: 0 auto;
-  width:320px;
+  width:240px;
   height:40px;
   padding-bottom:20px;
+}
+
+.indiv_quiz_container {
+  padding-top:10px;
+  padding-bottom:45px;
+  color: #444444;
+}
+
+.quiz_one {
+  border-bottom: 1px solid #818181;
+}
+
+#buttons {
+  margin: 0 auto;
+  margin-top:5px;
+  margin-bottom:10px;
+  width:240px;
 }
 
 #second_counter{
@@ -111,8 +138,8 @@ a {
 }
 
 #conversation {
-  padding: 10px 10px 80px;
-  margin-top:140px;
+  padding: 45px 0px 60px 0px;
+  margin-left:0px;
   overflow-y: auto;
   vertical-align: top;
   height: 100%;
@@ -122,22 +149,16 @@ a {
 
 #quiz_box {
   position:fixed;
+  top:0px;
   border-left:1px solid #000;
   display: inline-block;
-  width: 45%;
+  width: 50%;
+  left:50%;
   height: 100%;
 }
 
 .container {
-  // position:absolute;
-  // top: 0px;
-  // left: 60%;
-  // border-left:1px solid #000;
-  // display: inline-block;
-  // width: 40%;
-  // position: fixed;
   vertical-align: top;
-  background-color: #6495ED;
   text-align:center;
 }
 
@@ -148,18 +169,32 @@ a {
 }
 
 .msg {
-  padding:10px;
-  border-radius:10px;
+  padding-left:5%;
+  padding-right:5%;
+  padding-top:10px;
+  padding-bottom:10px;
+  border-bottom:1px;
   margin: 0 auto;
-  width: 80%;
-  margin-bottom:30px;
+  width: 90%;
+  margin-bottom:0px;
+}
+
+.msgtext {
+  padding-left:10%;
+  padding-right:5%;
+  padding-top:10px;
+  padding-bottom:10px;
+  border-bottom:1px;
+  margin: 0 auto;
+  width: 85%;
+  margin-bottom:0px;
 }
 
 #submission{
   position: fixed;
+  left: 0;
+  width: 50%;
   bottom: 0;
-  width: 100%;
-  right: 0;
   border-top: 2px solid #dcc;
   background: #fff;
 
@@ -192,15 +227,17 @@ a {
 }
 
 .progress-wrap {
-  background: #f80;
-  width: 100%;
-  margin: 20px 0;
+  background: #ec9712;
+  width: 90%;
+  border-radius:40px;
+  //margin: 0 auto;
+  margin: 20px auto 30px auto;
   overflow: hidden;
   position: relative;
 }
 
 .progress-bar {
-  background: #ddd;
+  background: #dddddd;
   left: 0;
   position: absolute;
   top: 0;
