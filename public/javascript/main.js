@@ -274,7 +274,7 @@
         return;
       }
       if (_.size(usernames) > 2) {
-        console.error("There are more than 2 users, this is bad!");
+        console.error("There are more than 2 users, this may be bad!");
       }
       if (!this.responsibleForMakingQuiz(usernames)) {
         console.log('not responsible');
