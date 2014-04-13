@@ -41,7 +41,7 @@ class window.EmotionProcessor
         console.log msg
         return [msg, count]
       count += 1
-      msg = msg.slice(0, msg.indexOf(face)) + "[?]" + msg.slice(msg.indexOf(face) + face.length)
+      msg = msg.slice(0, msg.indexOf(face)) + "[emoticon]" + msg.slice(msg.indexOf(face) + face.length)
 
   @numberOfEmotions: =>
     return Object.keys(EMOTICON_MAP).length
