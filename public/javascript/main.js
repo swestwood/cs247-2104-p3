@@ -106,12 +106,13 @@
 
   window.QuizCoordinator = (function() {
     "Manipulates Quiz objects for the game.";
-    function QuizCoordinator(elem, emotionVideoStore, fbInteractor, currentPowerup, updatePowerupScreenFcn) {
+    function QuizCoordinator(elem, emotionVideoStore, fbInteractor, currentPowerup, updatePowerupScreenFcn, quizIsShown) {
       this.elem = elem;
       this.emotionVideoStore = emotionVideoStore;
       this.fbInteractor = fbInteractor;
       this.currentPowerup = currentPowerup;
       this.updatePowerupScreenFcn = updatePowerupScreenFcn;
+      this.quizIsShown = quizIsShown;
       this.createQuiz = __bind(this.createQuiz, this);
       this.responsibleForMakingQuiz = __bind(this.responsibleForMakingQuiz, this);
       this.readyForQuiz = __bind(this.readyForQuiz, this);
@@ -191,14 +192,22 @@
 
     QuizCoordinator.prototype.switchScreen = function(showQuiz) {
       if (showQuiz) {
+        this.quizIsShown = true;
         $('#quiz_container').show();
-        return $('#powerup_container').hide();
+        $('#powerup_container').hide();
+        return $(".webcam_stream_container").hide();
       } else {
+        this.quizIsShown = false;
         $('#quiz_container').hide();
+        $(".webcam_stream_container").show();
         this.currentPowerup = new Powerup($('#powerup_container'));
         this.currentPowerup.render();
         $('#powerup_container').show();
-        return this.updatePowerupScreenFcn();
+        this.updatePowerupScreenFcn();
+        if (this.readyForQuiz()) {
+          console.log("Ready for quiz!");
+          return this.createQuiz();
+        }
       }
     };
 
@@ -250,6 +259,9 @@
 
     QuizCoordinator.prototype.readyForQuiz = function() {
       var enoughUserVideos;
+      if (this.quizIsShown) {
+        return false;
+      }
       enoughUserVideos = this.getLongVideoArrays();
       return _.size(enoughUserVideos) >= 2;
     };
@@ -372,7 +384,7 @@
       this.emotionVideoStore = new EmotionVideoStore();
       this.currentPowerup = new Powerup($('#powerup_container'));
       this.currentPowerup.render();
-      this.quizCoordinator = new QuizCoordinator($("#quiz_container"), this.emotionVideoStore, this.fbInteractor, this.currentPowerup, this.updatePowerupScreen);
+      this.quizCoordinator = new QuizCoordinator($("#quiz_container"), this.emotionVideoStore, this.fbInteractor, this.currentPowerup, this.updatePowerupScreen, false);
       this.updatePowerupScreen();
       this.fbInteractor.fb_instance_users.on("child_added", function(snapshot) {
         _this.displayMessage({

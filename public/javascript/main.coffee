@@ -80,7 +80,7 @@ class window.Quiz
 class window.QuizCoordinator
   """Manipulates Quiz objects for the game."""
 
-  constructor: (@elem, @emotionVideoStore, @fbInteractor, @currentPowerup, @updatePowerupScreenFcn) ->
+  constructor: (@elem, @emotionVideoStore, @fbInteractor, @currentPowerup, @updatePowerupScreenFcn, @quizIsShown) ->
     @quizProbability = 1
     # @currentQuiz = null  # Non-null if a quiz is currently being taken by the user
     @username = null  # Should be set by the chatroom as soon as a username is given.
@@ -131,14 +131,22 @@ class window.QuizCoordinator
 
   switchScreen: (showQuiz) =>
     if showQuiz
+      @quizIsShown = true
       $('#quiz_container').show()
       $('#powerup_container').hide()
+      $(".webcam_stream_container").hide()
     else 
+      @quizIsShown = false
       $('#quiz_container').hide()
+      $(".webcam_stream_container").show()
       @currentPowerup = new Powerup($('#powerup_container'))
       @currentPowerup.render()
       $('#powerup_container').show()
       @updatePowerupScreenFcn()
+      if @readyForQuiz()  # TODO move this so that it fires randomly.
+        console.log "Ready for quiz!"
+        @createQuiz()
+
 
   handleIncomingQuiz: (snapshot, quizName) =>
     @emotionVideoStore.removeVideoItem(snapshot, @fbInteractor.fb_user_video_list)
@@ -170,6 +178,8 @@ class window.QuizCoordinator
     return longVideoArrs
 
   readyForQuiz: =>
+    if @quizIsShown  # not ready for a quiz if there is already an active quiz
+      return false
     # Find the two longest user arrays in the video store. Check if they are longer than the min required.
     # If both are, then return true.
     enoughUserVideos = @getLongVideoArrays()
@@ -254,7 +264,7 @@ class window.ChatRoom
     @emotionVideoStore = new EmotionVideoStore()
     @currentPowerup = new Powerup($('#powerup_container'))
     @currentPowerup.render()
-    @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor, @currentPowerup, @updatePowerupScreen)
+    @quizCoordinator = new QuizCoordinator($("#quiz_container"), @emotionVideoStore, @fbInteractor, @currentPowerup, @updatePowerupScreen, false)
     @updatePowerupScreen()
 
     # Listen to Firebase events

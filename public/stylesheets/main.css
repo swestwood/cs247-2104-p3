@@ -21,17 +21,6 @@ a {
   font-weight: bold;
   color: #666666;
 }
-#webcam_stream {
-  border: 1px solid black;
-  background-color: #dddddd;
-  width: 340px;
-  height: 255px;
-  display: inline-block;
-  padding: 0;
-}
-#webcam_stream video {
-  border: 2px solid #dcc;
-}
 #powerup_container {
   position: absolute;
   top: 0px;
@@ -127,6 +116,19 @@ a {
   height: 100%;
   width: 50%;
   display: inline-block;
+}
+.webcam_stream_container #webcam_stream {
+  position: absolute;
+  bottom: 20px;
+  border: 1px solid black;
+  background-color: #dddddd;
+  width: 340px;
+  height: 255px;
+  display: inline-block;
+  padding: 0;
+}
+.webcam_stream_container #webcam_stream video {
+  border: 2px solid #dcc;
 }
 #quiz_box {
   position: fixed;

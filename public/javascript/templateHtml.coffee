@@ -28,7 +28,7 @@ window.buildTemplates = =>
   <div class="progress-wrap progress" data-progress-percent="0">
     <div class="progress-bar progress"></div>
   </div>
-  <div id="webcam_stream"></div>
+
   <p id="powerup_encouragement"></p>
   """
 
