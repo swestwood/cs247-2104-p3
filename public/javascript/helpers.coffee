@@ -77,8 +77,8 @@ class window.VideoRecorder
 
   mediaSuccessCallback: (videoStream) =>
     # create video element, attach webcam videoStream to video element
-    video_width = 160
-    video_height = 120
+    video_width = 340
+    video_height = 255
     webcam_stream = document.getElementById('webcam_stream')
     video = document.createElement('video')
     webcam_stream.innerHTML = ""
