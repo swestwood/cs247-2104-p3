@@ -22,7 +22,7 @@ window.EMOTICON_MAP =
   "heart": ["<3"]
   "broken": ["</3"]
 
-window.VIDEO_LENGTH_MS = 1000  # The length of time that the snippets are recorded  # TODO make longer after testing
+window.VIDEO_LENGTH_MS = 4000  # The length of time that the snippets are recorded  # TODO make longer after testing
 
 window.NUMBER_WRONG_CHOICES = 3  # The number of wrong choices shown for a quiz
 

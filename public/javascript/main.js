@@ -19,7 +19,7 @@
     "broken": ["</3"]
   };
 
-  window.VIDEO_LENGTH_MS = 1000;
+  window.VIDEO_LENGTH_MS = 4000;
 
   window.NUMBER_WRONG_CHOICES = 3;
 
