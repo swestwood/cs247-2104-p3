@@ -354,7 +354,7 @@ class window.ChatRoom
     url = document.location.origin+"/#"+@fbInteractor.fb_chat_room_id
     @displayMessage({m: "Share this url with your friend to join this chat: <a href='" + url + "' target='_blank'>" + url+"</a>", c: "darkred"})
     # Block until user name entered
-    # @username = window.prompt("Welcome! What's your name?")  # Commented out for faster testing.
+    @username = window.prompt("Welcome! What's your name?")  # Commented out for faster testing.
     if not @username
       @username = "anonymous"+Math.floor(Math.random()*1111)
     @quizCoordinator.setUserName(@username)
