@@ -32,6 +32,12 @@ a {
   color: #444444;
   padding: 15px;
 }
+.powerup-user-available {
+  padding: 3px;
+  background-color: #c9e1f7;
+  width: 80%;
+  margin: 0 auto;
+}
 #quiz-done-area {
   background-color: lightyellow;
 }
@@ -117,14 +123,18 @@ a {
   width: 50%;
   display: inline-block;
 }
+.webcam_stream_container {
+  height: 100%;
+  width: 100%;
+}
 .webcam_stream_container #webcam_stream {
-  position: absolute;
-  bottom: 20px;
+  position: relative;
+  top: 311px;
+  margin: 0 auto;
   border: 1px solid black;
   background-color: #dddddd;
   width: 340px;
   height: 255px;
-  display: inline-block;
   padding: 0;
 }
 .webcam_stream_container #webcam_stream video {
